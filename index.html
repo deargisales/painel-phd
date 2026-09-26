@@ -929,12 +929,12 @@ label {
 // CONFIGURAÇÃO DO FIREBASE
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyBrDMWwEbbPim4-xM6IPcUh0H2LFQUwZD0",
-  authDomain: "doutorado-gisela.firebaseapp.com",
-  projectId: "doutorado-gisela",
-  storageBucket: "doutorado-gisela.firebasestorage.app",
-  messagingSenderId: "730904451710",
-  appId: "1:730904451710:web:392e578a9804e5c88e962f"
+  apiKey: "AIzaSyBrDMWwEbbPim4-xM6IPcUh0H2LFQUwZD0",
+  authDomain: "doutorado-gisela.firebaseapp.com",
+  projectId: "doutorado-gisela",
+  storageBucket: "doutorado-gisela.firebasestorage.app",
+  messagingSenderId: "730904451710",
+  appId: "1:730904451710:web:392e578a9804e5c88e962f"
 };
 
 let firebaseActive = false;
@@ -949,29 +949,45 @@ try {
   console.error("Erro na inicialização do Firebase", e);
 }
 
-// --- VARIÁVEIS DE ESTADO ---
+// --- VARIÁVEIS DE ESTADO (Com carregamento do Cache Local primeiro) ---
 const ls_get = (k, d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
 const ls_set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-let tasks = [];
-let milestones = [];
-let labEntries = [];
-let articles = [];
+let tasks = ls_get('phd_tasks', []);
+let milestones = ls_get('phd_milestones', [
+  { id: uid(), title: 'Exame de Qualificação', startDate: '2025-01-01', endDate: '2026-12-31' },
+  { id: uid(), title: 'Coleta de Dados de Campo', startDate: '2026-01-01', endDate: '2027-06-30' }
+]);
+let labEntries = ls_get('phd_labs', []);
+let articles = ls_get('phd_arts', []);
 let selectedLabId = null;
 let selectedArtId = null;
 
-// Função centralizada de sincronização com a Nuvem (Firestore)
+// Sincronização Dupla: Salva no LocalStorage E no Firebase simultaneamente
 function syncState() {
+  const currentNote = document.getElementById('progressNote') ? document.getElementById('progressNote').value : '';
+  
+  // 1. Gravação Local Instantânea
+  ls_set('phd_tasks', tasks);
+  ls_set('phd_milestones', milestones);
+  ls_set('phd_labs', labEntries);
+  ls_set('phd_arts', articles);
+  ls_set('phd_note', currentNote);
+
+  // 2. Gravação na Nuvem (Firebase Firestore)
   if (firebaseActive && currentUser) {
     db.collection('users').doc(currentUser.uid).set({
       tasks,
       milestones,
       labEntries,
       articles,
-      note: document.getElementById('progressNote').value || '',
+      note: currentNote,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true }).catch(err => console.error("Erro ao salvar na nuvem:", err));
+    }, { merge: true }).catch(err => {
+      console.error("Erro ao salvar na nuvem:", err);
+      showToast("⚠️ Erro de gravação na nuvem! Verifique as regras do Firebase.");
+    });
   }
 }
 
@@ -1003,10 +1019,8 @@ function initCloudSync() {
     const authOverlay = document.getElementById('authOverlay');
 
     if (user) {
-      // Oculta tela de login
       authOverlay.style.display = 'none';
 
-      // Atualiza Perfil na Sidebar
       document.getElementById('uName').innerText = user.displayName ? user.displayName.split(' ')[0] : 'Investigadora';
       document.getElementById('uEmail').innerText = user.email || '';
       document.getElementById('welcomeTitle').innerText = `Bem-vinda, ${user.displayName ? user.displayName.split(' ')[0] : 'Investigadora'}`;
@@ -1017,38 +1031,30 @@ function initCloudSync() {
         document.getElementById('uAvatar').innerText = user.displayName ? user.displayName[0] : 'U';
       }
 
-      // Escuta os dados do utilizador no Firestore em tempo real
+      // Escuta em tempo real da Nuvem
       db.collection('users').doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
           const data = doc.data();
-          tasks = data.tasks || [];
-          milestones = data.milestones || [];
-          labEntries = data.labEntries || [];
-          articles = data.articles || [];
+          if (data.tasks) { tasks = data.tasks; ls_set('phd_tasks', tasks); }
+          if (data.milestones) { milestones = data.milestones; ls_set('phd_milestones', milestones); }
+          if (data.labEntries) { labEntries = data.labEntries; ls_set('phd_labs', labEntries); }
+          if (data.articles) { articles = data.articles; ls_set('phd_arts', articles); }
           if (data.note !== undefined) {
             document.getElementById('progressNote').value = data.note;
+            ls_set('phd_note', data.note);
           }
           renderAll();
         } else {
-          // Se for o primeiro acesso, guarda o estado inicial na nuvem
-          milestones = [
-            { id: uid(), title: 'Exame de Qualificação', startDate: '2025-01-01', endDate: '2026-12-31' },
-            { id: uid(), title: 'Coleta de Dados de Campo', startDate: '2026-01-01', endDate: '2027-06-30' }
-          ];
+          // Primeira vez do utilizador na nuvem
           syncState();
         }
+      }, err => {
+        console.error("Erro no onSnapshot:", err);
       });
 
-      showToast("Painel desbloqueado!");
+      showToast("Painel desbloqueado e sincronizado!");
     } else {
-      // Exibe a tela de bloqueio e limpa dados da tela
       authOverlay.style.display = 'flex';
-      tasks = [];
-      milestones = [];
-      labEntries = [];
-      articles = [];
-      document.getElementById('progressNote').value = '';
-      renderAll();
     }
   });
 }
@@ -1058,7 +1064,7 @@ function showToast(message) {
   const toast = document.getElementById('toast');
   document.getElementById('toastMsg').innerText = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
 function switchTab(tabId) {
@@ -1578,6 +1584,9 @@ function renderAll() {
 }
 
 window.onload = function() {
+  const savedNote = localStorage.getItem('phd_note');
+  if(savedNote) document.getElementById('progressNote').value = JSON.parse(savedNote);
+  
   renderAll();
   renderLabForm(null);
   renderArtForm(null);
