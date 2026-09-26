@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel PhD — Command Center com Nuvem</title>
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- FIREBASE SDKs (v10 COMPAT) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg-canvas: #dce7df;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-subtle: #f7faf8;
+  --accent-green: #d5e5d7;
+  --accent-green-dark: #2a4734;
+  --text-main: #1e2923;
+  --text-muted: #738276;
+  --btn-black: #111111;
+  --border-color: #eaf0eb;
+  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-pill: 99px;
+  --danger: #e74c3c;
+  --danger-soft: #fbeae8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* APP LAYOUT - CONTAINER */
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  max-width: 1320px;
+  background: var(--bg-subtle);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+  min-height: 880px;
+  position: relative;
+}
+
+/* SIDEBAR DESIGN */
+.sidebar {
+  width: 250px;
+  flex: 0 0 250px;
+  background: var(--bg-sidebar);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid var(--border-color);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text-main);
+  margin-bottom: 25px;
+  padding-left: 8px;
+}
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--text-main);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  background: var(--btn-black);
+  color: #fff;
+}
+
+/* SYNC CLOUD USER BOX */
+.user-cloud-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.user-cloud-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-green-dark);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.92rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover {
+  background: #f0f5f1;
+  color: var(--text-main);
+}
+.nav-item.active {
+  background: var(--accent-green);
+  color: var(--text-main);
+  font-weight: 700;
+}
+.nav-item i {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* MAIN CONTENT */
+main {
+  flex: 1;
+  padding: 30px 35px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  min-width: 0;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.welcome-text h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.welcome-text p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.search-box {
+  position: relative;
+  width: 280px;
+}
+.search-box input {
+  width: 100%;
+  padding: 11px 16px 11px 42px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: #ffffff;
+  font-size: 0.88rem;
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+.search-box input:focus {
+  border-color: #bcd1c1;
+}
+.search-box i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--btn-black);
+  color: white;
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s;
+}
+.icon-btn:hover { transform: scale(1.05); }
+
+.notification-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 8px; height: 8px;
+  background: #ff5252;
+  border-radius: 50%;
+  border: 2px solid var(--btn-black);
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: 55px; right: 0;
+  width: 280px;
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 15px;
+  display: none;
+  z-index: 100;
+}
+.notifications-dropdown.show { display: block; }
+.notifications-dropdown h4 {
+  font-size: 0.9rem; margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color); padding-bottom: 6px;
+}
+.notif-item {
+  font-size: 0.8rem; padding: 8px 0;
+  border-bottom: 1px dashed var(--border-color); color: var(--text-muted);
+}
+
+/* CARDS & GRIDS */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+}
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stat-card .num {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.stat-card .lbl {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.cols-2 {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 22px;
+}
+@media (max-width: 1024px) {
+  .cols-2 { grid-template-columns: 1fr; }
+  .dashboard-container { flex-direction: column; }
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); }
+}
+
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* BUTTONS & CONTROLS */
+.btn-black {
+  background: var(--btn-black);
+  color: white;
+  border: none;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-black:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.btn-secondary {
+  background: #f0f5f1;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: var(--accent-green); }
+
+.btn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid #f5c6cb;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-danger:hover { background: #f8d7da; }
+
+.btn-sm { padding: 6px 12px; font-size: 0.78rem; }
+
+/* INPUTS & FORMS */
+input, select, textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: #ffffff;
+  outline: none;
+  font-size: 0.86rem;
+  color: var(--text-main);
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent-green-dark);
+}
+label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: block;
+  margin: 10px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.formgrid .full { grid-column: 1 / -1; }
+
+/* LIST ITEMS */
+.row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  margin-bottom: 10px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.row-item:hover { background: #f9fbf9; }
+.row-item.active { border-color: var(--accent-green-dark); background: #f0f5f1; }
+
+.group-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-green-dark);
+  background: #f0f5f1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin: 14px 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* BADGES & TAGS */
+.badge {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+.badge-alta { background: var(--danger-soft); color: var(--danger); }
+.badge-media { background: #fff3d6; color: #b87e2e; }
+.badge-baixa { background: var(--accent-green); color: var(--accent-green-dark); }
+
+/* MILESTONES PROGRESS */
+.m-bar-wrap { margin-bottom: 16px; position: relative; }
+.m-info { display: flex; justify-content: space-between; font-size: 0.84rem; margin-bottom: 5px; }
+.m-track { height: 10px; background: #eaf0eb; border-radius: var(--radius-pill); overflow: hidden; }
+.m-fill { height: 100%; background: var(--accent-green-dark); border-radius: var(--radius-pill); transition: width 0.4s; }
+
+/* CALENDAR WIDGET */
+.calendar-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.cal-nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.cal-nav-btn:hover { background: var(--accent-green); color: var(--text-main); }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  text-align: center;
+  font-size: 0.78rem;
+}
+.cal-day {
+  padding: 8px 0;
+  border-radius: 8px;
+  color: var(--text-main);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+}
+.cal-day.active { background: var(--btn-black); color: white; font-weight: 600; }
+.cal-day.has-tasks::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background-color: #2e7d32;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+.cal-day.active.has-tasks::after {
+  background-color: #a5d6a7;
+}
+
+/* SECTIONS SWITCHING */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* SPLIT LAYOUT */
+.split { display: flex; gap: 20px; align-items: flex-start; }
+.split .lcol { flex: 0 0 360px; }
+.split .rcol { flex: 1; min-width: 0; }
+@media (max-width: 900px) { .split { flex-direction: column; } .split .lcol { width: 100%; } }
+
+/* TIMER POMODORO */
+.timer-wrap { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
+.ring {
+  width: 220px; height: 220px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: conic-gradient(var(--accent-green-dark) calc(var(--pct,0)*1%), var(--border-color) 0);
+  transition: background 0.3s;
+}
+.ring-inner {
+  width: 184px; height: 184px; border-radius: 50%;
+  background: var(--bg-card);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.ring-inner .t { font-size: 2.5rem; font-weight: 700; color: var(--text-main); }
+.ring-inner .m { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+
+/* TOAST FEEDBACK */
+.toast {
+  position: fixed;
+  bottom: 25px; right: 25px;
+  background: var(--btn-black);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 4000;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* MODALS */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: none; justify-content: center; align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: white;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  width: 90%; max-width: 650px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-md);
+}
+
+/* PIN PROTECTION OVERLAY */
+.pin-overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--bg-canvas);
+  z-index: 3000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 28px;
+}
+.pin-card {
+  background: white;
+  padding: 40px 35px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.pin-icon {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  color: var(--accent-green-dark);
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
+.pin-display { display: flex; gap: 12px; justify-content: center; margin: 10px 0; }
+.pin-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  transition: all 0.2s;
+}
+.pin-dot.filled { background: var(--btn-black); border-color: var(--btn-black); }
+.pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
+.pin-btn {
+  width: 100%; height: 52px; border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: #f7faf8; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+  transition: all 0.15s;
+}
+.pin-btn:hover { background: var(--accent-green); }
+
+.matrix-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
+.matrix-table th, .matrix-table td { padding: 10px; border: 1px solid var(--border-color); text-align: left; vertical-align: top; }
+.matrix-table th { background: var(--bg-subtle); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="dashboard-container">
+
+  <!-- PIN SECURITY OVERLAY -->
+  <div class="pin-overlay" id="pinOverlay">
+    <div class="pin-card">
+      <div class="pin-icon"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <h2 style="font-size:1.25rem;">Painel PhD Protegido</h2>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Introduza o seu PIN para desbloquear</p>
+      </div>
+
+      <div class="pin-display">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <div class="pin-pad">
+        <button class="pin-btn" onclick="pressPin('1')">1</button>
+        <button class="pin-btn" onclick="pressPin('2')">2</button>
+        <button class="pin-btn" onclick="pressPin('3')">3</button>
+        <button class="pin-btn" onclick="pressPin('4')">4</button>
+        <button class="pin-btn" onclick="pressPin('5')">5</button>
+        <button class="pin-btn" onclick="pressPin('6')">6</button>
+        <button class="pin-btn" onclick="pressPin('7')">7</button>
+        <button class="pin-btn" onclick="pressPin('8')">8</button>
+        <button class="pin-btn" onclick="pressPin('9')">9</button>
+        <button class="pin-btn" onclick="clearPin()"><i class="fa-solid fa-eraser" style="font-size:0.9rem"></i></button>
+        <button class="pin-btn" onclick="pressPin('0')">0</button>
+        <button class="pin-btn" onclick="checkPin()"><i class="fa-solid fa-arrow-right" style="font-size:0.9rem"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <span>Painel PhD</span>
+      </div>
+
+      <!-- CARD DE SINCRONIZAÇÃO EM NUVEM -->
+      <div class="user-cloud-card" id="cloudCard">
+        <div class="user-cloud-info">
+          <div class="user-avatar" id="uAvatar"><i class="fa-solid fa-cloud"></i></div>
+          <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <div id="uName" style="font-weight:700;">Modo Local</div>
+            <div id="uStatus" style="color:var(--text-muted); font-size:0.7rem;">Sincronize na nuvem</div>
+          </div>
+        </div>
+        <button class="btn-black btn-sm" id="authBtn" onclick="toggleAuth()" style="width:100%; margin-top:4px;">
+          <i class="fa-brands fa-google"></i> Entrar com Google
+        </button>
+      </div>
+
+      <nav class="nav-group">
+        <button class="nav-item active" data-tab="dash" onclick="switchTab('dash')">
+          <i class="fa-solid fa-house"></i> Dashboard
+        </button>
+        <button class="nav-item" data-tab="lab" onclick="switchTab('lab')">
+          <i class="fa-solid fa-flask"></i> Caderno de Lab
+        </button>
+        <button class="nav-item" data-tab="art" onclick="switchTab('art')">
+          <i class="fa-solid fa-book-open"></i> Artigos & Leituras
+        </button>
+        <button class="nav-item" data-tab="pom" onclick="switchTab('pom')">
+          <i class="fa-solid fa-stopwatch"></i> Timer Pomodoro
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-bottom nav-group">
+      <button class="nav-item" onclick="openModal('modalBackup')">
+        <i class="fa-solid fa-database"></i> Backup / Dados
+      </button>
+      <button class="nav-item" onclick="lockSystem()">
+        <i class="fa-solid fa-lock"></i> Bloquear Painel
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <main>
+    <header class="header">
+      <div class="welcome-text">
+        <h1 id="welcomeTitle">Bem-vinda, Gisela </h1>
+        <p>Acompanhe e gerencie o seu progresso acadêmico</p>
+      </div>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="globalSearch" placeholder="Pesquisar no painel..." oninput="handleGlobalSearch(this.value)">
+        </div>
+        
+        <button class="icon-btn" id="notifBtn">
+          <i class="fa-regular fa-bell"></i>
+          <span class="notification-badge"></span>
+        </button>
+
+        <div class="notifications-dropdown" id="notifDropdown">
+          <h4>Notificações Acadêmicas</h4>
+          <div class="notif-item" id="notifNextTask">Carregando tarefas...</div>
+          <div class="notif-item" id="notifArticlesCount">0 artigos salvos na biblioteca</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- TAB: DASHBOARD -->
+    <section class="tab-content active" id="tab-dash">
+      <div class="stats-grid" style="margin-bottom: 22px;">
+        <div class="card stat-card">
+          <div class="num" id="stTasks">0</div>
+          <div class="lbl">Tarefas Pendentes</div>
+        </div>
+        <div class="card stat-card">
+          <div class="num" id="stDeadline">—</div>
+          <div class="lbl">Próximo Prazo</div>
+        </div>
+        <div class="card stat-card">
+          <div class="num" id="stLab">0</div>
+          <div class="lbl">Entradas de Lab</div>
+        </div>
+        <div class="card stat-card">
+          <div class="num" id="stArt">0</div>
+          <div class="lbl">Artigos Salvos</div>
+        </div>
+      </div>
+
+      <div class="cols-2">
+        <div style="display:flex; flex-direction:column; gap:22px;">
+          <!-- MARCOS DO DOUTORADO -->
+          <div class="card">
+            <div class="section-title">
+              <span>🎯 Marcos do Doutorado</span>
+              <button class="btn-black btn-sm" onclick="openModal('modalMilestone')">+ Novo Marco</button>
+            </div>
+            <div id="milestoneList"></div>
+          </div>
+
+          <!-- TAREFAS -->
+          <div class="card">
+            <div class="section-title">Tarefas & Prazos</div>
+            <div class="formgrid">
+              <input id="taskTitle" placeholder="Nova tarefa..." class="full">
+              <input id="taskDue" type="date">
+              <select id="taskCat">
+                <option value="Lab">🧪 Lab</option>
+                <option value="Artigo">📄 Artigo</option>
+                <option value="Escrita">✍️ Escrita</option>
+                <option value="Burocracia">📋 Burocracia</option>
+              </select>
+              <select id="taskPrio" class="full">
+                <option value="baixa">Baixa Prioridade</option>
+                <option value="media" selected>Média Prioridade</option>
+                <option value="alta">Alta Prioridade</option>
+              </select>
+            </div>
+            <button class="btn-black" onclick="addTask()" style="margin-top: 12px; width: 100%;">Adicionar Tarefa</button>
+            <div id="taskList" style="margin-top: 16px;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:22px;">
+          <!-- CALENDÁRIO DINÂMICO -->
+          <div class="card calendar-card">
+            <div class="section-title">
+              <span id="calMonthTitle">📅 Carregando...</span>
+              <div>
+                <button class="cal-nav-btn" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="cal-nav-btn" onclick="changeMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">Atividades do mês (dias marcados possuem tarefas)</p>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+
+          <!-- NOTAS -->
+          <div class="card">
+            <div class="section-title">Anotações Contínuas</div>
+            <textarea id="progressNote" placeholder="Escreva aqui o seu resumo do dia..." style="height:100px; resize:none;"></textarea>
+            <button class="btn-black btn-sm" onclick="saveProgress()" style="margin-top:10px;">Salvar Nota</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: CADERNO DE LAB -->
+    <section class="tab-content" id="tab-lab">
+      <div class="split">
+        <div class="lcol card">
+          <div class="section-title">Experimentos</div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+            <input id="labSearch" placeholder="🔍 Buscar experimentos..." oninput="renderLabList(this.value)">
+            <button class="btn-black btn-sm" onclick="newLab()">+ Novo Experimento</button>
+          </div>
+          <div id="labList"></div>
+        </div>
+
+        <div class="rcol card">
+          <div id="labForm"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: ARTIGOS & LEITURAS -->
+    <section class="tab-content" id="tab-art">
+      <div class="split">
+        <div class="lcol card">
+          <div class="section-title">
+            <span>Biblioteca</span>
+            <button class="btn-secondary btn-sm" onclick="openMatrixModal()">Matriz Sintética</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+            <input id="artSearch" placeholder="🔍 Buscar artigos..." oninput="renderArtList(this.value)">
+            <button class="btn-black btn-sm" onclick="newArt()">+ Adicionar Artigo</button>
+          </div>
+          <div id="artList"></div>
+        </div>
+
+        <div class="rcol card">
+          <div id="artForm"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: TIMER POMODORO -->
+    <section class="tab-content" id="tab-pom">
+      <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
+        <div class="section-title" style="justify-content:center;">⏱ Cronômetro de Foco PhD</div>
+        <div class="timer-wrap">
+          <div class="ring" id="ring">
+            <div class="ring-inner">
+              <div class="t" id="tDisplay">25:00</div>
+              <div class="m" id="tLabel">Sessão de Foco</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 25px; display: flex; gap: 12px; justify-content: center;">
+            <button class="btn-black" id="tStart" onclick="toggleTimer()">Iniciar Sessão</button>
+            <button class="btn-secondary" onclick="resetTimer()">Reiniciar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check" style="color: #4cd964;"></i>
+  <span id="toastMsg">Ação realizada!</span>
+</div>
+
+<!-- MODAL NOVO MARCO -->
+<div class="modal-overlay" id="modalMilestone">
+  <div class="modal">
+    <div class="section-title">🎯 Adicionar Marco do Doutorado</div>
+    <div class="formgrid">
+      <div class="full">
+        <label>Título do Marco</label>
+        <input type="text" id="msTitle" placeholder="Ex: Exame de Qualificação">
+      </div>
+      <div>
+        <label>Data Inicial</label>
+        <input type="date" id="msStartDate">
+      </div>
+      <div>
+        <label>Data Final (Prazo)</label>
+        <input type="date" id="msEndDate">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-black" onclick="saveMilestone()" style="flex:1;">Salvar Marco</button>
+      <button class="btn-secondary" onclick="closeModal('modalMilestone')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TAREFA -->
+<div class="modal-overlay" id="modalEditTask">
+  <div class="modal">
+    <div class="section-title">✏️ Editar Tarefa</div>
+    <input type="hidden" id="editTaskId">
+    <div class="formgrid">
+      <div class="full">
+        <label>Título da Tarefa</label>
+        <input type="text" id="editTaskTitle">
+      </div>
+      <div>
+        <label>Data de Vencimento</label>
+        <input type="date" id="editTaskDue">
+      </div>
+      <div>
+        <label>Categoria</label>
+        <select id="editTaskCat">
+          <option value="Lab">🧪 Lab</option>
+          <option value="Artigo">📄 Artigo</option>
+          <option value="Escrita">✍️ Escrita</option>
+          <option value="Burocracia">📋 Burocracia</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>Prioridade</label>
+        <select id="editTaskPrio">
+          <option value="baixa">Baixa Prioridade</option>
+          <option value="media">Média Prioridade</option>
+          <option value="alta">Alta Prioridade</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-black" onclick="saveTaskEdit()" style="flex:1;">Salvar Alterações</button>
+      <button class="btn-secondary" onclick="closeModal('modalEditTask')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MATRIZ DE LEITURA -->
+<div class="modal-overlay" id="modalMatrix">
+  <div class="modal" style="max-width: 900px;">
+    <div class="section-title">
+      <span>📊 Matriz Sintética de Leitura</span>
+      <button class="btn-secondary btn-sm" onclick="closeModal('modalMatrix')">Fechar</button>
+    </div>
+    <div id="matrixTableContainer"></div>
+  </div>
+</div>
+
+<!-- MODAL BACKUP -->
+<div class="modal-overlay" id="modalBackup">
+  <div class="modal">
+    <div class="section-title">💾 Backup & Dados</div>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Guarde seus dados com segurança localmente no seu computador ou restaure um backup existente.</p>
+    
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button class="btn-black" onclick="exportBackup()" style="width:100%;">Exportar Backup (JSON)</button>
+      
+      <label>Restaurar de arquivo JSON</label>
+      <input type="file" id="importFileInput" accept=".json" onchange="importBackup(event)">
+      
+      <button class="btn-secondary" onclick="closeModal('modalBackup')" style="width:100%; margin-top:10px;">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// CONFIGURAÇÃO DO FIREBASE (INSIRA SUAS CHAVES AQUI)
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBrDMWwEbbPim4-xM6IPcUh0H2LFQUwZD0",
+  authDomain: "doutorado-gisela.firebaseapp.com",
+  projectId: "doutorado-gisela",
+  storageBucket: "doutorado-gisela.firebasestorage.app",
+  messagingSenderId: "730904451710",
+  appId: "1:730904451710:web:392e578a9804e5c88e962f"
+};
+
+// Inicializa Firebase apenas se as chaves forem preenchidas
+let firebaseActive = false;
+let auth, db, currentUser = null;
+
+try {
+  if (firebaseConfig.apiKey !== "SUA_API_KEY") {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    firebaseActive = true;
+  }
+} catch (e) {
+  console.warn("Firebase não inicializado. Verifique suas chaves.", e);
+}
+
+// --- ARMAZENAMENTO E SINCRONIZAÇÃO DA NUVEM ---
+const ls_get = (k, d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
+const ls_set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+let tasks = ls_get('phd_tasks', []);
+let milestones = ls_get('phd_milestones', [
+  { id: uid(), title: 'Exame de Qualificação', startDate: '2025-01-01', endDate: '2026-12-31' },
+  { id: uid(), title: 'Coleta de Dados de Campo', startDate: '2026-01-01', endDate: '2027-06-30' }
+]);
+let labEntries = ls_get('phd_labs', []);
+let articles = ls_get('phd_arts', []);
+let selectedLabId = null;
+let selectedArtId = null;
+
+// Função centralizada para salvar dados localmente e na nuvem
+function syncState() {
+  ls_set('phd_tasks', tasks);
+  ls_set('phd_milestones', milestones);
+  ls_set('phd_labs', labEntries);
+  ls_set('phd_arts', articles);
+
+  if (firebaseActive && currentUser) {
+    db.collection('users').doc(currentUser.uid).set({
+      tasks,
+      milestones,
+      labEntries,
+      articles,
+      note: document.getElementById('progressNote').value || '',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(err => console.error("Erro ao salvar na nuvem:", err));
+  }
+}
+
+// --- AUTENTICAÇÃO COM GOOGLE ---
+function toggleAuth() {
+  if (!firebaseActive) {
+    alert("Insira as chaves do seu projeto Firebase no código HTML para ativar a sincronização em nuvem.");
+    return;
+  }
+
+  if (currentUser) {
+    auth.signOut().then(() => showToast("Sessão terminada."));
+  } else {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err => showToast("Erro no login: " + err.message));
+  }
+}
+
+function initCloudSync() {
+  if (!firebaseActive) return;
+
+  auth.onAuthStateChanged(user => {
+    currentUser = user;
+    const uName = document.getElementById('uName');
+    const uStatus = document.getElementById('uStatus');
+    const uAvatar = document.getElementById('uAvatar');
+    const authBtn = document.getElementById('authBtn');
+
+    if (user) {
+      uName.innerText = user.displayName ? user.displayName.split(' ')[0] : 'Usuário';
+      uStatus.innerText = "☁️ Nuvem Ativa";
+      uAvatar.innerText = user.displayName ? user.displayName[0] : 'U';
+      authBtn.innerText = "Sair";
+      
+      // Escuta mudanças na nuvem em tempo real
+      db.collection('users').doc(user.uid).onSnapshot(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.tasks) tasks = data.tasks;
+          if (data.milestones) milestones = data.milestones;
+          if (data.labEntries) labEntries = data.labEntries;
+          if (data.articles) articles = data.articles;
+          if (data.note !== undefined) document.getElementById('progressNote').value = data.note;
+
+          renderAll();
+        }
+      });
+      showToast("Conectado à Nuvem!");
+    } else {
+      uName.innerText = "Modo Local";
+      uStatus.innerText = "Sincronize na nuvem";
+      uAvatar.innerHTML = '<i class="fa-solid fa-cloud"></i>';
+      authBtn.innerHTML = '<i class="fa-brands fa-google"></i> Entrar com Google';
+    }
+  });
+}
+
+// --- PIN DE SEGURANÇA ---
+let currentPin = "";
+const CORRECT_PIN = "1989";
+
+function pressPin(num) {
+  if (currentPin.length < 4) {
+    currentPin += num;
+    updatePinDots();
+  }
+}
+function clearPin() { currentPin = ""; updatePinDots(); }
+function updatePinDots() {
+  document.querySelectorAll('.pin-dot').forEach((dot, index) => {
+    dot.classList.toggle('filled', index < currentPin.length);
+  });
+}
+function checkPin() {
+  if (currentPin === CORRECT_PIN) {
+    document.getElementById('pinOverlay').style.display = 'none';
+    showToast("Acesso autorizado!");
+    clearPin();
+  } else {
+    showToast("PIN Incorreto!");
+    clearPin();
+  }
+}
+function lockSystem() {
+  document.getElementById('pinOverlay').style.display = 'flex';
+  showToast("Painel bloqueado por segurança.");
+}
+
+// --- FEEDBACK & INTERFACE ---
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').innerText = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.toggle('active', tab.id === 'tab-' + tabId);
+  });
+}
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+const notifBtn = document.getElementById('notifBtn');
+const notifDropdown = document.getElementById('notifDropdown');
+notifBtn.addEventListener('click', (e) => { e.stopPropagation(); notifDropdown.classList.toggle('show'); });
+document.addEventListener('click', () => notifDropdown.classList.remove('show'));
+
+function handleGlobalSearch(query) {
+  const q = query.toLowerCase().trim();
+  if(!q) { renderTasks(); renderLabList(); renderArtList(); return; }
+  renderTasks(q); renderLabList(q); renderArtList(q);
+}
+
+// --- ESTATÍSTICAS ---
+function updateStats() {
+  const pendingTasks = tasks.filter(t => !t.done);
+  document.getElementById('stTasks').innerText = pendingTasks.length;
+  document.getElementById('stLab').innerText = labEntries.length;
+  document.getElementById('stArt').innerText = articles.length;
+  document.getElementById('notifArticlesCount').innerText = `${articles.length} artigos na biblioteca`;
+
+  const sortedWithDates = pendingTasks.filter(t => t.due).sort((a,b) => new Date(a.due) - new Date(b.due));
+  if(sortedWithDates.length > 0) {
+    const nextDue = sortedWithDates[0];
+    const d = new Date(nextDue.due);
+    document.getElementById('stDeadline').innerText = `${d.getDate()}/${d.getMonth()+1}`;
+    document.getElementById('notifNextTask').innerText = `Próximo prazo: ${nextDue.title} (${d.getDate()}/${d.getMonth()+1})`;
+  } else {
+    document.getElementById('stDeadline').innerText = "—";
+    document.getElementById('notifNextTask').innerText = "Nenhuma tarefa pendente com prazo";
+  }
+}
+
+function calcProgress(startDateStr, endDateStr) {
+  if (!startDateStr || !endDateStr) return 0;
+  const start = new Date(startDateStr).getTime();
+  const end = new Date(endDateStr).getTime();
+  const today = new Date().getTime();
+  if (isNaN(start) || isNaN(end) || start >= end) return 0;
+  if (today <= start) return 0;
+  if (today >= end) return 100;
+  return Math.max(0, Math.min(100, Math.round(((today - start) / (end - start)) * 100)));
+}
+
+function formatDate(dStr) {
+  if(!dStr) return '';
+  const parts = dStr.split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+// --- MARCOS DO DOUTORADO ---
+function renderMilestones() {
+  const box = document.getElementById('milestoneList');
+  if(milestones.length === 0) {
+    box.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">Nenhum marco cadastrado.</p>`;
+    return;
+  }
+  box.innerHTML = milestones.map(m => {
+    let pct = (m.startDate && m.endDate) ? calcProgress(m.startDate, m.endDate) : (m.pct || 0);
+    return `
+      <div class="m-bar-wrap">
+        <div class="m-info">
+          <span><strong>${m.title}</strong></span>
+          <span>${pct}% <i class="fa-solid fa-trash" style="cursor:pointer; color:var(--danger); font-size:0.75rem; margin-left:6px;" onclick="deleteMilestone('${m.id}')"></i></span>
+        </div>
+        <div class="m-track"><div class="m-fill" style="width:${pct}%"></div></div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:3px;">${formatDate(m.startDate)} até ${formatDate(m.endDate)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function saveMilestone() {
+  const title = document.getElementById('msTitle').value;
+  const startDate = document.getElementById('msStartDate').value;
+  const endDate = document.getElementById('msEndDate').value;
+  if(!title || !startDate || !endDate) { showToast("Preencha todos os campos!"); return; }
+  milestones.push({ id: uid(), title, startDate, endDate });
+  syncState();
+  renderMilestones();
+  closeModal('modalMilestone');
+  showToast("Marco adicionado!");
+}
+
+function deleteMilestone(id) {
+  milestones = milestones.filter(m => m.id !== id);
+  syncState();
+  renderMilestones();
+  showToast("Marco removido.");
+}
+
+// --- TAREFAS ---
+function addTask() {
+  const title = document.getElementById('taskTitle').value;
+  const due = document.getElementById('taskDue').value;
+  const cat = document.getElementById('taskCat').value;
+  const prio = document.getElementById('taskPrio').value;
+
+  if(!title) { showToast("Insira o título da tarefa!"); return; }
+
+  tasks.push({ id: uid(), title, due, cat, prio, done: false });
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskDue').value = '';
+  syncState();
+  renderTasks();
+  renderCalendar();
+  updateStats();
+  showToast("Tarefa adicionada!");
+}
+
+function openEditTask(id, event) {
+  event.stopPropagation();
+  const t = tasks.find(item => item.id === id);
+  if(!t) return;
+  document.getElementById('editTaskId').value = t.id;
+  document.getElementById('editTaskTitle').value = t.title;
+  document.getElementById('editTaskDue').value = t.due || '';
+  document.getElementById('editTaskCat').value = t.cat || 'Lab';
+  document.getElementById('editTaskPrio').value = t.prio || 'media';
+  openModal('modalEditTask');
+}
+
+function saveTaskEdit() {
+  const id = document.getElementById('editTaskId').value;
+  const title = document.getElementById('editTaskTitle').value;
+  if(!title) return;
+
+  tasks = tasks.map(t => t.id === id ? {
+    ...t, title, due: document.getElementById('editTaskDue').value,
+    cat: document.getElementById('editTaskCat').value,
+    prio: document.getElementById('editTaskPrio').value
+  } : t);
+
+  syncState();
+  renderTasks();
+  renderCalendar();
+  updateStats();
+  closeModal('modalEditTask');
+  showToast("Tarefa atualizada!");
+}
+
+function toggleTask(id) {
+  tasks = tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
+  syncState();
+  renderTasks();
+  renderCalendar();
+  updateStats();
+}
+
+function deleteTask(id, e) {
+  e.stopPropagation();
+  tasks = tasks.filter(t => t.id !== id);
+  syncState();
+  renderTasks();
+  renderCalendar();
+  updateStats();
+  showToast("Tarefa removida.");
+}
+
+function renderTasks(filterQuery = '') {
+  const box = document.getElementById('taskList');
+  let filtered = filterQuery ? tasks.filter(t => t.title.toLowerCase().includes(filterQuery)) : tasks;
+  if(filtered.length === 0) {
+    box.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:10px;">Nenhuma tarefa encontrada.</p>`;
+    return;
+  }
+  box.innerHTML = filtered.map(t => `
+    <div class="row-item" onclick="toggleTask('${t.id}')" style="opacity: ${t.done ? '0.5' : '1'}">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <i class="fa-${t.done ? 'solid fa-circle-check' : 'regular fa-circle'}" style="color:${t.done ? 'var(--accent-green-dark)' : 'var(--text-muted)'}"></i>
+        <div>
+          <div style="font-weight:600; font-size:0.88rem; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.title}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">${t.cat} • ${t.due ? formatDate(t.due) : 'Sem data'}</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="badge badge-${t.prio}">${t.prio}</span>
+        <i class="fa-solid fa-pen" style="color:var(--text-muted); font-size:0.85rem; padding: 4px;" onclick="openEditTask('${t.id}', event)"></i>
+        <i class="fa-solid fa-trash" style="color:var(--text-muted); font-size:0.85rem; padding: 4px;" onclick="deleteTask('${t.id}', event)"></i>
+      </div>
+    </div>
+  `).join('');
+}
+
+function saveProgress() {
+  ls_set('phd_note', document.getElementById('progressNote').value);
+  syncState();
+  showToast("Anotação salva!");
+}
+
+// --- CADERNO DE LAB ---
+function renderLabList(filterQuery = '') {
+  const box = document.getElementById('labList');
+  let filtered = filterQuery ? labEntries.filter(l => l.title.toLowerCase().includes(filterQuery)) : labEntries;
+  if(filtered.length === 0) {
+    box.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted); padding:10px;">Nenhum experimento.</p>`;
+    return;
+  }
+  const grouped = {};
+  filtered.forEach(l => {
+    const dKey = l.date || 'Sem Data Definida';
+    if (!grouped[dKey]) grouped[dKey] = [];
+    grouped[dKey].push(l);
+  });
+  const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+  let html = '';
+  sortedDates.forEach(dKey => {
+    html += `<div class="group-header"><i class="fa-regular fa-calendar-days"></i> ${dKey !== 'Sem Data Definida' ? formatDate(dKey) : dKey}</div>`;
+    grouped[dKey].forEach(l => {
+      html += `
+        <div class="row-item ${selectedLabId === l.id ? 'active' : ''}" onclick="selectLab('${l.id}')">
+          <div>
+            <div style="font-weight:600; font-size:0.88rem;">${l.title || 'Sem título'}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${l.category || 'Geral'}</div>
+          </div>
+          <span class="badge badge-${l.status === 'Concluído' ? 'baixa' : 'media'}">${l.status}</span>
+        </div>
+      `;
+    });
+  });
+  box.innerHTML = html;
+}
+
+function selectLab(id) {
+  selectedLabId = id;
+  renderLabForm(labEntries.find(l => l.id === id));
+  renderLabList();
+}
+function newLab() {
+  selectedLabId = null;
+  renderLabForm({ id: null, title: '', date: new Date().toISOString().split('T')[0], category: 'Bancada', status: 'Em Andamento', protocol: '', results: '' });
+  renderLabList();
+}
+
+function renderLabForm(entry = null) {
+  const formBox = document.getElementById('labForm');
+  if(!entry) {
+    formBox.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">Selecione um experimento ou crie um novo.</p>`;
+    return;
+  }
+  formBox.innerHTML = `
+    <div class="section-title">
+      <span>🧪 ${entry.id ? 'Editar Experimento' : 'Novo Experimento'}</span>
+      ${entry.id ? `<button class="btn-danger btn-sm" onclick="deleteLab('${entry.id}')">Excluir</button>` : ''}
+    </div>
+    <div class="formgrid">
+      <div class="full"><label>Título</label><input id="lTitle" value="${entry.title || ''}"></div>
+      <div><label>Data</label><input id="lDate" type="date" value="${entry.date || ''}"></div>
+      <div><label>Categoria</label>
+        <select id="lCat">
+          <option value="Bancada" ${entry.category==='Bancada'?'selected':''}>🧪 Bancada</option>
+          <option value="Simulação" ${entry.category==='Simulação'?'selected':''}>💻 Simulação</option>
+          <option value="Análise de Dados" ${entry.category==='Análise de Dados'?'selected':''}>📊 Análise de Dados</option>
+          <option value="Campo" ${entry.category==='Campo'?'selected':''}>🌿 Campo</option>
+        </select>
+      </div>
+      <div class="full"><label>Status</label>
+        <select id="lStatus">
+          <option value="Planejado" ${entry.status==='Planejado'?'selected':''}>Planejado</option>
+          <option value="Em Andamento" ${entry.status==='Em Andamento'?'selected':''}>Em Andamento</option>
+          <option value="Concluído" ${entry.status==='Concluído'?'selected':''}>Concluído</option>
+        </select>
+      </div>
+      <div class="full"><label>Protocolo</label><textarea id="lProtocol" style="height:80px; resize:none;">${entry.protocol || ''}</textarea></div>
+      <div class="full"><label>Resultados</label><textarea id="lResults" style="height:80px; resize:none;">${entry.results || ''}</textarea></div>
+    </div>
+    <button class="btn-black" onclick="saveLab()" style="margin-top:15px; width:100%;">Salvar Experimento</button>
+  `;
+}
+
+function saveLab() {
+  const title = document.getElementById('lTitle').value;
+  if(!title) return;
+  const labData = {
+    id: selectedLabId || uid(),
+    title, date: document.getElementById('lDate').value,
+    category: document.getElementById('lCat').value,
+    status: document.getElementById('lStatus').value,
+    protocol: document.getElementById('lProtocol').value,
+    results: document.getElementById('lResults').value
+  };
+
+  if(selectedLabId) { labEntries = labEntries.map(l => l.id === selectedLabId ? labData : l); }
+  else { labEntries.unshift(labData); selectedLabId = labData.id; }
+
+  syncState(); renderLabList(); renderLabForm(labData); updateStats();
+  showToast("Experimento salvo!");
+}
+
+function deleteLab(id) {
+  labEntries = labEntries.filter(l => l.id !== id);
+  selectedLabId = null;
+  syncState(); renderLabList(); renderLabForm(null); updateStats();
+  showToast("Experimento excluído.");
+}
+
+// --- ARTIGOS & BIBLIOTECA ---
+function renderArtList(filterQuery = '') {
+  const box = document.getElementById('artList');
+  let filtered = filterQuery ? articles.filter(a => a.title.toLowerCase().includes(filterQuery)) : articles;
+  if(filtered.length === 0) {
+    box.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted); padding:10px;">Nenhum artigo encontrado.</p>`;
+    return;
+  }
+  box.innerHTML = filtered.map(a => `
+    <div class="row-item ${selectedArtId === a.id ? 'active' : ''}" onclick="selectArt('${a.id}')">
+      <div>
+        <div style="font-weight:600; font-size:0.88rem;">${a.title || 'Sem título'}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);">${a.authors || 'Autor desconhecido'} (${a.year || 'Ano N/A'})</div>
+      </div>
+      <span class="badge badge-${a.status === 'Fichado' ? 'baixa' : 'media'}">${a.status || 'A Ler'}</span>
+    </div>
+  `).join('');
+}
+
+function selectArt(id) {
+  selectedArtId = id;
+  renderArtForm(articles.find(a => a.id === id));
+  renderArtList();
+}
+function newArt() {
+  selectedArtId = null;
+  renderArtForm({ id: null, title: '', authors: '', year: '', journal: '', status: 'A Ler', objective: '', methodology: '', results: '' });
+  renderArtList();
+}
+
+function renderArtForm(art = null) {
+  const formBox = document.getElementById('artForm');
+  if(!art) {
+    formBox.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">Selecione um artigo ou adicione um novo.</p>`;
+    return;
+  }
+  formBox.innerHTML = `
+    <div class="section-title">
+      <span>📚 ${art.id ? 'Editar Fichamento' : 'Novo Artigo'}</span>
+      ${art.id ? `<button class="btn-danger btn-sm" onclick="deleteArt('${art.id}')">Excluir</button>` : ''}
+    </div>
+    <div class="formgrid">
+      <div class="full"><label>Título da Publicação</label><input id="aTitle" value="${art.title || ''}"></div>
+      <div><label>Autores</label><input id="aAuthors" value="${art.authors || ''}"></div>
+      <div><label>Ano</label><input id="aYear" type="number" value="${art.year || ''}"></div>
+      <div><label>Periódico / DOI</label><input id="aJournal" value="${art.journal || ''}"></div>
+      <div><label>Status</label>
+        <select id="aStatus">
+          <option value="A Ler" ${art.status==='A Ler'?'selected':''}>📖 A Ler</option>
+          <option value="Lendo" ${art.status==='Lendo'?'selected':''}>⏳ Lendo</option>
+          <option value="Fichado" ${art.status==='Fichado'?'selected':''}>✅ Fichado</option>
+        </select>
+      </div>
+      <div class="full"><label>Objetivo</label><textarea id="aObj" style="height:55px; resize:none;">${art.objective || ''}</textarea></div>
+      <div class="full"><label>Metodologia</label><textarea id="aMeth" style="height:55px; resize:none;">${art.methodology || ''}</textarea></div>
+      <div class="full"><label>Achados</label><textarea id="aRes" style="height:55px; resize:none;">${art.results || ''}</textarea></div>
+    </div>
+    <button class="btn-black" onclick="saveArt()" style="margin-top:15px; width:100%;">Salvar Fichamento</button>
+  `;
+}
+
+function saveArt() {
+  const title = document.getElementById('aTitle').value;
+  if(!title) return;
+  const artData = {
+    id: selectedArtId || uid(), title,
+    authors: document.getElementById('aAuthors').value,
+    year: document.getElementById('aYear').value,
+    journal: document.getElementById('aJournal').value,
+    status: document.getElementById('aStatus').value,
+    objective: document.getElementById('aObj').value,
+    methodology: document.getElementById('aMeth').value,
+    results: document.getElementById('aRes').value
+  };
+
+  if(selectedArtId) { articles = articles.map(a => a.id === selectedArtId ? artData : a); }
+  else { articles.unshift(artData); selectedArtId = artData.id; }
+
+  syncState(); renderArtList(); renderArtForm(artData); updateStats();
+  showToast("Artigo salvo!");
+}
+
+function deleteArt(id) {
+  articles = articles.filter(a => a.id !== id);
+  selectedArtId = null;
+  syncState(); renderArtList(); renderArtForm(null); updateStats();
+  showToast("Artigo removido.");
+}
+
+function openMatrixModal() {
+  const container = document.getElementById('matrixTableContainer');
+  if(articles.length === 0) {
+    container.innerHTML = `<p style="padding:20px; text-align:center; color:var(--text-muted);">Nenhum artigo fichado.</p>`;
+  } else {
+    container.innerHTML = `
+      <table class="matrix-table">
+        <thead>
+          <tr><th>Título & Autores</th><th>Ano</th><th>Status</th><th>Objetivo</th><th>Metodologia</th><th>Resultados</th></tr>
+        </thead>
+        <tbody>
+          ${articles.map(a => `
+            <tr>
+              <td><strong>${a.title}</strong><br><small style="color:var(--text-muted);">${a.authors || '-'}</small></td>
+              <td>${a.year || '-'}</td>
+              <td><span class="badge badge-${a.status==='Fichado'?'baixa':'media'}">${a.status}</span></td>
+              <td>${a.objective || '-'}</td>
+              <td>${a.methodology || '-'}</td>
+              <td>${a.results || '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  openModal('modalMatrix');
+}
+
+// --- CALENDÁRIO ---
+let currentCalDate = new Date();
+function renderCalendar() {
+  const year = currentCalDate.getFullYear();
+  const month = currentCalDate.getMonth();
+  const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  document.getElementById('calMonthTitle').innerText = `📅 ${monthNames[month]}, ${year}`;
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  
+  let gridHtml = `<span style="color:var(--text-muted); font-weight:600">D</span><span style="color:var(--text-muted); font-weight:600">S</span><span style="color:var(--text-muted); font-weight:600">T</span><span style="color:var(--text-muted); font-weight:600">Q</span><span style="color:var(--text-muted); font-weight:600">Q</span><span style="color:var(--text-muted); font-weight:600">S</span><span style="color:var(--text-muted); font-weight:600">S</span>`;
+  
+  for (let i = firstDay - 1; i >= 0; i--) gridHtml += `<span style="opacity:0.3; padding:8px 0;">${daysInPrevMonth - i}</span>`;
+  
+  const today = new Date();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayTasks = tasks.filter(t => t.due === dateStr);
+    const hasTasks = dayTasks.length > 0;
+    const taskTitles = dayTasks.map(t => t.title).join(', ');
+
+    gridHtml += `<span class="cal-day ${isToday ? 'active' : ''} ${hasTasks ? 'has-tasks' : ''}" title="${hasTasks ? 'Tarefas: ' + taskTitles : ''}" onclick="${hasTasks ? `showToast('Tarefas em ${d}/${month+1}:${taskTitles}')` : ''}">${d}</span>`;
+  }
+  
+  const totalCells = firstDay + daysInMonth;
+  const remainingCells = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= remainingCells; i++) gridHtml += `<span style="opacity:0.3; padding:8px 0;">${i}</span>`;
+  
+  document.getElementById('calGrid').innerHTML = gridHtml;
+}
+function changeMonth(delta) { currentCalDate.setMonth(currentCalDate.getMonth() + delta); renderCalendar(); }
+
+// --- TIMER POMODORO ---
+let seconds = 25 * 60, timerId = null, running = false;
+function toggleTimer() {
+  running = !running;
+  document.getElementById('tStart').innerText = running ? 'Pausar' : 'Continuar';
+  if(running) {
+    timerId = setInterval(() => {
+      seconds--;
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      document.getElementById('tDisplay').innerText = `${m}:${s}`;
+      if(seconds <= 0) { clearInterval(timerId); showToast("Sessão finalizada!"); }
+    }, 1000);
+  } else { clearInterval(timerId); }
+}
+function resetTimer() {
+  clearInterval(timerId); running = false; seconds = 25 * 60;
+  document.getElementById('tDisplay').innerText = "25:00"; document.getElementById('tStart').innerText = "Iniciar Sessão";
+}
+
+// --- BACKUP ---
+function exportBackup() {
+  const data = JSON.stringify(localStorage);
+  const blob = new Blob([data], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "phd_command_center_backup.json";
+  a.click();
+  showToast("Backup baixado!");
+}
+
+function importBackup(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+      showToast("Dados restaurados com sucesso!");
+      setTimeout(() => location.reload(), 1000);
+    } catch(err) { showToast("Erro ao importar o arquivo."); }
+  };
+  reader.readAsText(file);
+}
+
+function renderAll() {
+  renderMilestones();
+  renderTasks();
+  renderCalendar();
+  renderLabList();
+  renderArtList();
+  updateStats();
+}
+
+window.onload = function() {
+  renderAll();
+  renderLabForm(null);
+  renderArtForm(null);
+  initCloudSync();
+
+  const savedNote = localStorage.getItem('phd_note');
+  if(savedNote) document.getElementById('progressNote').value = JSON.parse(savedNote);
+};
+</script>
+</body>
+</html>
