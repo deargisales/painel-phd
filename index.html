@@ -97,7 +97,7 @@ body {
   color: #fff;
 }
 
-/* SYNC CLOUD USER BOX */
+/* USER PROFILE CARD */
 .user-cloud-card {
   background: var(--bg-subtle);
   border: 1px solid var(--border-color);
@@ -112,18 +112,19 @@ body {
 .user-cloud-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .user-avatar {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--accent-green-dark);
   color: white;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  overflow: hidden;
 }
 
 .nav-group {
@@ -562,8 +563,8 @@ label {
   box-shadow: var(--shadow-md);
 }
 
-/* PIN PROTECTION OVERLAY */
-.pin-overlay {
+/* MANDATORY GOOGLE LOGIN OVERLAY */
+.auth-overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background: var(--bg-canvas);
   z-index: 3000;
@@ -572,43 +573,18 @@ label {
   align-items: center;
   border-radius: 28px;
 }
-.pin-card {
+.auth-card {
   background: white;
   padding: 40px 35px;
   border-radius: 24px;
   box-shadow: var(--shadow-md);
   text-align: center;
-  width: 340px;
+  width: 380px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
 }
-.pin-icon {
-  width: 60px; height: 60px;
-  border-radius: 50%;
-  background: var(--accent-green);
-  color: var(--accent-green-dark);
-  display: grid;
-  place-items: center;
-  font-size: 1.5rem;
-}
-.pin-display { display: flex; gap: 12px; justify-content: center; margin: 10px 0; }
-.pin-dot {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  border: 2px solid var(--text-muted);
-  transition: all 0.2s;
-}
-.pin-dot.filled { background: var(--btn-black); border-color: var(--btn-black); }
-.pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
-.pin-btn {
-  width: 100%; height: 52px; border-radius: 14px;
-  border: 1px solid var(--border-color);
-  background: #f7faf8; font-size: 1.2rem; font-weight: 700; cursor: pointer;
-  transition: all 0.15s;
-}
-.pin-btn:hover { background: var(--accent-green); }
 
 .matrix-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
 .matrix-table th, .matrix-table td { padding: 10px; border: 1px solid var(--border-color); text-align: left; vertical-align: top; }
@@ -619,36 +595,22 @@ label {
 
 <div class="dashboard-container">
 
-  <!-- PIN SECURITY OVERLAY -->
-  <div class="pin-overlay" id="pinOverlay">
-    <div class="pin-card">
-      <div class="pin-icon"><i class="fa-solid fa-lock"></i></div>
+  <!-- GOOGLE LOGIN MANDATORY GATEKEEPER OVERLAY -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-card">
+      <div class="brand-icon" style="width:50px; height:50px; font-size:22px;">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
       <div>
-        <h2 style="font-size:1.25rem;">Painel PhD Protegido</h2>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Introduza o seu PIN para desbloquear</p>
+        <h2 style="font-size:1.3rem;">Painel PhD</h2>
+        <p style="font-size:0.83rem; color:var(--text-muted); margin-top:6px; line-height:1.4;">
+          Acesso restrito por segurança. Faça login com a sua conta Google para desbloquear o painel e sincronizar o seu progresso.
+        </p>
       </div>
 
-      <div class="pin-display">
-        <div class="pin-dot"></div>
-        <div class="pin-dot"></div>
-        <div class="pin-dot"></div>
-        <div class="pin-dot"></div>
-      </div>
-
-      <div class="pin-pad">
-        <button class="pin-btn" onclick="pressPin('1')">1</button>
-        <button class="pin-btn" onclick="pressPin('2')">2</button>
-        <button class="pin-btn" onclick="pressPin('3')">3</button>
-        <button class="pin-btn" onclick="pressPin('4')">4</button>
-        <button class="pin-btn" onclick="pressPin('5')">5</button>
-        <button class="pin-btn" onclick="pressPin('6')">6</button>
-        <button class="pin-btn" onclick="pressPin('7')">7</button>
-        <button class="pin-btn" onclick="pressPin('8')">8</button>
-        <button class="pin-btn" onclick="pressPin('9')">9</button>
-        <button class="pin-btn" onclick="clearPin()"><i class="fa-solid fa-eraser" style="font-size:0.9rem"></i></button>
-        <button class="pin-btn" onclick="pressPin('0')">0</button>
-        <button class="pin-btn" onclick="checkPin()"><i class="fa-solid fa-arrow-right" style="font-size:0.9rem"></i></button>
-      </div>
+      <button class="btn-black" onclick="loginGoogle()" style="width:100%; padding: 12px; font-size: 0.9rem; margin-top:8px;">
+        <i class="fa-brands fa-google"></i> Entrar com o Google
+      </button>
     </div>
   </div>
 
@@ -660,17 +622,17 @@ label {
         <span>Painel PhD</span>
       </div>
 
-      <!-- CARD DE SINCRONIZAÇÃO EM NUVEM -->
+      <!-- PERFIL DO UTILIZADOR -->
       <div class="user-cloud-card" id="cloudCard">
         <div class="user-cloud-info">
-          <div class="user-avatar" id="uAvatar"><i class="fa-solid fa-cloud"></i></div>
+          <div class="user-avatar" id="uAvatar"><i class="fa-solid fa-user"></i></div>
           <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-            <div id="uName" style="font-weight:700;">Modo Local</div>
-            <div id="uStatus" style="color:var(--text-muted); font-size:0.7rem;">Sincronize na nuvem</div>
+            <div id="uName" style="font-weight:700;">Autenticando...</div>
+            <div id="uEmail" style="color:var(--text-muted); font-size:0.7rem; overflow:hidden; text-overflow:ellipsis;">—</div>
           </div>
         </div>
-        <button class="btn-black btn-sm" id="authBtn" onclick="toggleAuth()" style="width:100%; margin-top:4px;">
-          <i class="fa-brands fa-google"></i> Entrar com Google
+        <button class="btn-secondary btn-sm" onclick="logoutGoogle()" style="width:100%; margin-top:6px;">
+          <i class="fa-solid fa-right-from-bracket"></i> Sair da Conta
         </button>
       </div>
 
@@ -694,9 +656,6 @@ label {
       <button class="nav-item" onclick="openModal('modalBackup')">
         <i class="fa-solid fa-database"></i> Backup / Dados
       </button>
-      <button class="nav-item" onclick="lockSystem()">
-        <i class="fa-solid fa-lock"></i> Bloquear Painel
-      </button>
     </div>
   </aside>
 
@@ -704,8 +663,8 @@ label {
   <main>
     <header class="header">
       <div class="welcome-text">
-        <h1 id="welcomeTitle">Bem-vinda, Gisela </h1>
-        <p>Acompanhe e gerencie o seu progresso acadêmico</p>
+        <h1 id="welcomeTitle">Bem-vinda, Investigadora</h1>
+        <p>Acompanhe e gira o seu progresso acadêmico em tempo real</p>
       </div>
 
       <div class="header-actions">
@@ -967,7 +926,7 @@ label {
 
 <script>
 // ==========================================
-// CONFIGURAÇÃO DO FIREBASE (INSIRA SUAS CHAVES AQUI)
+// CONFIGURAÇÃO DO FIREBASE
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBrDMWwEbbPim4-xM6IPcUh0H2LFQUwZD0",
@@ -978,43 +937,32 @@ const firebaseConfig = {
   appId: "1:730904451710:web:392e578a9804e5c88e962f"
 };
 
-// Inicializa Firebase apenas se as chaves forem preenchidas
 let firebaseActive = false;
 let auth, db, currentUser = null;
 
 try {
-  if (firebaseConfig.apiKey !== "SUA_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    db = firebase.firestore();
-    firebaseActive = true;
-  }
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  firebaseActive = true;
 } catch (e) {
-  console.warn("Firebase não inicializado. Verifique suas chaves.", e);
+  console.error("Erro na inicialização do Firebase", e);
 }
 
-// --- ARMAZENAMENTO E SINCRONIZAÇÃO DA NUVEM ---
+// --- VARIÁVEIS DE ESTADO ---
 const ls_get = (k, d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
 const ls_set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-let tasks = ls_get('phd_tasks', []);
-let milestones = ls_get('phd_milestones', [
-  { id: uid(), title: 'Exame de Qualificação', startDate: '2025-01-01', endDate: '2026-12-31' },
-  { id: uid(), title: 'Coleta de Dados de Campo', startDate: '2026-01-01', endDate: '2027-06-30' }
-]);
-let labEntries = ls_get('phd_labs', []);
-let articles = ls_get('phd_arts', []);
+let tasks = [];
+let milestones = [];
+let labEntries = [];
+let articles = [];
 let selectedLabId = null;
 let selectedArtId = null;
 
-// Função centralizada para salvar dados localmente e na nuvem
+// Função centralizada de sincronização com a Nuvem (Firestore)
 function syncState() {
-  ls_set('phd_tasks', tasks);
-  ls_set('phd_milestones', milestones);
-  ls_set('phd_labs', labEntries);
-  ls_set('phd_arts', articles);
-
   if (firebaseActive && currentUser) {
     db.collection('users').doc(currentUser.uid).set({
       tasks,
@@ -1027,18 +975,23 @@ function syncState() {
   }
 }
 
-// --- AUTENTICAÇÃO COM GOOGLE ---
-function toggleAuth() {
+// --- LOGIN E SESSÃO OBRIGATÓRIA ---
+function loginGoogle() {
   if (!firebaseActive) {
-    alert("Insira as chaves do seu projeto Firebase no código HTML para ativar a sincronização em nuvem.");
+    alert("Erro na inicialização do Firebase. Verifique a sua ligação.");
     return;
   }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => {
+    showToast("Erro de autenticação: " + err.message);
+  });
+}
 
-  if (currentUser) {
-    auth.signOut().then(() => showToast("Sessão terminada."));
-  } else {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(err => showToast("Erro no login: " + err.message));
+function logoutGoogle() {
+  if (auth) {
+    auth.signOut().then(() => {
+      showToast("Sessão encerrada com segurança.");
+    });
   }
 }
 
@@ -1047,69 +1000,57 @@ function initCloudSync() {
 
   auth.onAuthStateChanged(user => {
     currentUser = user;
-    const uName = document.getElementById('uName');
-    const uStatus = document.getElementById('uStatus');
-    const uAvatar = document.getElementById('uAvatar');
-    const authBtn = document.getElementById('authBtn');
+    const authOverlay = document.getElementById('authOverlay');
 
     if (user) {
-      uName.innerText = user.displayName ? user.displayName.split(' ')[0] : 'Usuário';
-      uStatus.innerText = "☁️ Nuvem Ativa";
-      uAvatar.innerText = user.displayName ? user.displayName[0] : 'U';
-      authBtn.innerText = "Sair";
+      // Oculta tela de login
+      authOverlay.style.display = 'none';
+
+      // Atualiza Perfil na Sidebar
+      document.getElementById('uName').innerText = user.displayName ? user.displayName.split(' ')[0] : 'Investigadora';
+      document.getElementById('uEmail').innerText = user.email || '';
+      document.getElementById('welcomeTitle').innerText = `Bem-vinda, ${user.displayName ? user.displayName.split(' ')[0] : 'Investigadora'}`;
       
-      // Escuta mudanças na nuvem em tempo real
+      if (user.photoURL) {
+        document.getElementById('uAvatar').innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+      } else {
+        document.getElementById('uAvatar').innerText = user.displayName ? user.displayName[0] : 'U';
+      }
+
+      // Escuta os dados do utilizador no Firestore em tempo real
       db.collection('users').doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
           const data = doc.data();
-          if (data.tasks) tasks = data.tasks;
-          if (data.milestones) milestones = data.milestones;
-          if (data.labEntries) labEntries = data.labEntries;
-          if (data.articles) articles = data.articles;
-          if (data.note !== undefined) document.getElementById('progressNote').value = data.note;
-
+          tasks = data.tasks || [];
+          milestones = data.milestones || [];
+          labEntries = data.labEntries || [];
+          articles = data.articles || [];
+          if (data.note !== undefined) {
+            document.getElementById('progressNote').value = data.note;
+          }
           renderAll();
+        } else {
+          // Se for o primeiro acesso, guarda o estado inicial na nuvem
+          milestones = [
+            { id: uid(), title: 'Exame de Qualificação', startDate: '2025-01-01', endDate: '2026-12-31' },
+            { id: uid(), title: 'Coleta de Dados de Campo', startDate: '2026-01-01', endDate: '2027-06-30' }
+          ];
+          syncState();
         }
       });
-      showToast("Conectado à Nuvem!");
+
+      showToast("Painel desbloqueado!");
     } else {
-      uName.innerText = "Modo Local";
-      uStatus.innerText = "Sincronize na nuvem";
-      uAvatar.innerHTML = '<i class="fa-solid fa-cloud"></i>';
-      authBtn.innerHTML = '<i class="fa-brands fa-google"></i> Entrar com Google';
+      // Exibe a tela de bloqueio e limpa dados da tela
+      authOverlay.style.display = 'flex';
+      tasks = [];
+      milestones = [];
+      labEntries = [];
+      articles = [];
+      document.getElementById('progressNote').value = '';
+      renderAll();
     }
   });
-}
-
-// --- PIN DE SEGURANÇA ---
-let currentPin = "";
-const CORRECT_PIN = "1989";
-
-function pressPin(num) {
-  if (currentPin.length < 4) {
-    currentPin += num;
-    updatePinDots();
-  }
-}
-function clearPin() { currentPin = ""; updatePinDots(); }
-function updatePinDots() {
-  document.querySelectorAll('.pin-dot').forEach((dot, index) => {
-    dot.classList.toggle('filled', index < currentPin.length);
-  });
-}
-function checkPin() {
-  if (currentPin === CORRECT_PIN) {
-    document.getElementById('pinOverlay').style.display = 'none';
-    showToast("Acesso autorizado!");
-    clearPin();
-  } else {
-    showToast("PIN Incorreto!");
-    clearPin();
-  }
-}
-function lockSystem() {
-  document.getElementById('pinOverlay').style.display = 'flex';
-  showToast("Painel bloqueado por segurança.");
 }
 
 // --- FEEDBACK & INTERFACE ---
@@ -1315,7 +1256,6 @@ function renderTasks(filterQuery = '') {
 }
 
 function saveProgress() {
-  ls_set('phd_note', document.getElementById('progressNote').value);
   syncState();
   showToast("Anotação salva!");
 }
@@ -1600,7 +1540,7 @@ function resetTimer() {
 
 // --- BACKUP ---
 function exportBackup() {
-  const data = JSON.stringify(localStorage);
+  const data = JSON.stringify({ tasks, milestones, labEntries, articles });
   const blob = new Blob([data], {type: "application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -1616,9 +1556,13 @@ function importBackup(event) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+      if(data.tasks) tasks = data.tasks;
+      if(data.milestones) milestones = data.milestones;
+      if(data.labEntries) labEntries = data.labEntries;
+      if(data.articles) articles = data.articles;
+      syncState();
+      renderAll();
       showToast("Dados restaurados com sucesso!");
-      setTimeout(() => location.reload(), 1000);
     } catch(err) { showToast("Erro ao importar o arquivo."); }
   };
   reader.readAsText(file);
@@ -1638,9 +1582,6 @@ window.onload = function() {
   renderLabForm(null);
   renderArtForm(null);
   initCloudSync();
-
-  const savedNote = localStorage.getItem('phd_note');
-  if(savedNote) document.getElementById('progressNote').value = JSON.parse(savedNote);
 };
 </script>
 </body>
